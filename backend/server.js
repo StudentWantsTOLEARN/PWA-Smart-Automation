@@ -1,12 +1,10 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const axios = require('axios');
 const cors = require('cors');
 
 // Dynamic port configuration for Render cloud deployment
 const APP_PORT = process.env.PORT || 3000;
-const ESP32_IP = process.env.ESP32_IP || 'http://192.168.1.99';
 
 const app = express();
 const server = http.createServer(app);
@@ -47,33 +45,38 @@ let latestTelemetry = {
   espOnline: false
 };
 
-async function pollESP32() {
-  try {
-    const response = await axios.get(`${ESP32_IP}/api/status`, { timeout: 3500 });
-    latestTelemetry = { ...response.data, espOnline: true };
-  } catch (error) {
-    if (latestTelemetry.espOnline) {
-      console.error(`[ESP32 Offline]: ${error.message}`);
-    }
+let pendingCommand = null;
+let lastEspHeartbeat = 0;
+
+// Heartbeat interval: Mark ESP32 offline if no ping is received within 8 seconds
+setInterval(() => {
+  if (Date.now() - lastEspHeartbeat > 8000 && latestTelemetry.espOnline) {
     latestTelemetry.espOnline = false;
+    io.emit('telemetry', latestTelemetry);
   }
-  io.emit('telemetry', latestTelemetry);
-}
+}, 2000);
 
-// Poll ESP32 every 800ms
-setInterval(pollESP32, 800);
+// Endpoint for ESP32 to POST outbound telemetry and retrieve pending commands
+app.post('/api/telemetry', (req, res) => {
+  lastEspHeartbeat = Date.now();
+  
+  if (req.body && Object.keys(req.body).length > 0) {
+    latestTelemetry = { ...latestTelemetry, ...req.body, espOnline: true };
+    io.emit('telemetry', latestTelemetry);
+  }
 
-app.get('/api/control/:command', async (req, res) => {
+  // Send pending command back to ESP32 in HTTP response and clear queue
+  const commandToSend = pendingCommand;
+  pendingCommand = null;
+  res.json({ success: true, command: commandToSend });
+});
+
+// Route triggered when tapping buttons on your Vercel frontend
+app.get('/api/control/:command', (req, res) => {
   const { command } = req.params;
-  console.log(`[Command Sent]: Sending /${command} to ESP32...`);
-  try {
-    await axios.get(`${ESP32_IP}/${command}`, { timeout: 3500 });
-    await pollESP32();
-    res.json({ success: true, commandExecuted: command });
-  } catch (error) {
-    console.error(`[Command Failed]: /${command} - ${error.message}`);
-    res.status(500).json({ success: false, error: 'Failed to communicate with ESP32' });
-  }
+  console.log(`[Command Queued]: /${command}`);
+  pendingCommand = command;
+  res.json({ success: true, commandQueued: command });
 });
 
 io.on('connection', (socket) => {
@@ -84,6 +87,6 @@ io.on('connection', (socket) => {
 server.listen(APP_PORT, () => {
   console.log(`================================================`);
   console.log(` Backend running on port ${APP_PORT}`);
-  console.log(` Target ESP32 Node: ${ESP32_IP}`);
+  console.log(` Mode: Outbound ESP32 Telemetry Receiver`);
   console.log(`================================================`);
 });
