@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import io from 'socket.io-client';
 import './App.css';
 
-const BACKEND_URL = "http://localhost:3000";
+const BACKEND_URL = "https://pwa-smart-automation.onrender.com"
 const socket = io(BACKEND_URL, { autoConnect: true });
 
 export default function App() {
