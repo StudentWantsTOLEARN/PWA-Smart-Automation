@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import io from 'socket.io-client';
 import './App.css';
 
-const BACKEND_URL = "https://pwa-smart-automation.onrender.com"
+const BACKEND_URL = "https://pwa-smart-automation.onrender.com";
 const socket = io(BACKEND_URL, { autoConnect: true });
 
 export default function App() {
@@ -33,7 +33,9 @@ export default function App() {
 
   useEffect(() => {
     socket.on('telemetry', (data) => setTelemetry(data));
-    return () => socket.off('telemetry');
+    return () => {
+      socket.off('telemetry');
+    };
   }, []);
 
   const sendCommand = async (cmd) => {
@@ -237,9 +239,10 @@ export default function App() {
             } ${
               showRadarMotionEffect ? 'csi-motion-alert' : 'csi-normal-scan'
             }`}
+            style={{ position: 'relative', overflow: 'hidden' }}
           >
             {showRadarMotionEffect && (
-              <div className="csi-radar-overlay motion-active">
+              <div className="csi-radar-overlay motion-active" style={{ overflow: 'hidden' }}>
                 <div className="radar-center-ping"></div>
                 <span className="radar-ring r1"></span>
                 <span className="radar-ring r2"></span>
@@ -373,22 +376,23 @@ export default function App() {
             </div>
           </div>
 
-          {/* 2. CLIP FAN CARD */}
+          {/* 2. CLIP FAN CARD (Strict Containment Applied) */}
           <div
             onClick={() => toggleFocus('fan')}
             className={`ios-card fan-card ${
               currentFocus === 'fan' ? 'card-active-focus' : ''
             }`}
+            style={{ position: 'relative', overflow: 'hidden' }}
           >
             {(currentFocus === 'fan' || telemetry.fan) && (
-              <div className="wind-streams">
+              <div className="wind-streams" style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
                 <span className="wind-line line-1"></span>
                 <span className="wind-line line-2"></span>
                 <span className="wind-line line-3"></span>
               </div>
             )}
 
-            <div className="card-header">
+            <div className="card-header" style={{ position: 'relative', zIndex: 2 }}>
               <div className="card-title-group">
                 <span className={`card-icon ${telemetry.fan ? 'fan-spinning-icon' : ''}`}>
                   🌀
@@ -410,10 +414,10 @@ export default function App() {
                 )}
               </div>
             </div>
-            <p className="card-subtitle mb-16">
+            <p className="card-subtitle mb-16" style={{ position: 'relative', zIndex: 2 }}>
               {telemetry.fan ? 'Airflow enabled' : 'Fan powered off'}
             </p>
-            <div className="ios-btn-row">
+            <div className="ios-btn-row" style={{ position: 'relative', zIndex: 2 }}>
               <button
                 onClick={(e) => { e.stopPropagation(); sendCommand('R2_ON'); setManualFocus('fan'); }}
                 className={`ios-btn ${telemetry.fan ? 'ios-btn-blue' : 'ios-btn-glass'} flex-1`}
@@ -435,9 +439,10 @@ export default function App() {
             className={`ios-card full-span kettle-card ${
               currentFocus === 'kettle' ? 'card-active-focus' : ''
             }`}
+            style={{ position: 'relative', overflow: 'hidden' }}
           >
             {(currentFocus === 'kettle' || telemetry.kettle) && (
-              <div className="smokey-overlay">
+              <div className="smokey-overlay" style={{ overflow: 'hidden' }}>
                 <div className="smoke-glow-base"></div>
                 <div className="smoke-puff puff-1"></div>
                 <div className="smoke-puff puff-2"></div>
@@ -446,7 +451,7 @@ export default function App() {
               </div>
             )}
 
-            <div className="card-header">
+            <div className="card-header" style={{ position: 'relative', zIndex: 2 }}>
               <div className="card-title-group">
                 <span className={`card-icon ${telemetry.kettle ? 'kettle-boiling-icon' : ''}`}>
                   🫖
@@ -469,7 +474,7 @@ export default function App() {
               </div>
             </div>
 
-            <div className="timer-box">
+            <div className="timer-box" style={{ position: 'relative', zIndex: 2 }}>
               <div className="timer-digits">
                 {telemetry.kettle ? formatTime(telemetry.kettleRem) : '00:00'}
               </div>
@@ -478,7 +483,7 @@ export default function App() {
               </p>
             </div>
 
-            <div className="preset-grid">
+            <div className="preset-grid" style={{ position: 'relative', zIndex: 2 }}>
               <button
                 onClick={(e) => { e.stopPropagation(); sendCommand('K_TEA'); setManualFocus('kettle'); }}
                 className="preset-card"
@@ -506,6 +511,7 @@ export default function App() {
               <button
                 onClick={(e) => { e.stopPropagation(); sendCommand('K_OFF'); }}
                 className="ios-btn ios-btn-red full-width mt-12"
+                style={{ position: 'relative', zIndex: 2 }}
               >
                 Stop Kettle
               </button>
@@ -524,9 +530,10 @@ export default function App() {
                 ? 'rice-cooking-active'
                 : 'rice-standby-active'
             }`}
+            style={{ position: 'relative', overflow: 'hidden' }}
           >
             {(currentFocus === 'rice' || telemetry.rice || telemetry.riceAlarm) && (
-              <div className="rice-simmer-overlay">
+              <div className="rice-simmer-overlay" style={{ overflow: 'hidden' }}>
                 <div className="simmer-wave wave-1"></div>
                 <div className="simmer-wave wave-2"></div>
                 <div className="rice-steam-particles">
@@ -537,7 +544,7 @@ export default function App() {
               </div>
             )}
 
-            <div className="card-header">
+            <div className="card-header" style={{ position: 'relative', zIndex: 2 }}>
               <div className="card-title-group">
                 <span className={`card-icon ${telemetry.rice ? 'rice-cooking-icon' : ''}`}>
                   🍚
@@ -572,7 +579,7 @@ export default function App() {
               </div>
             </div>
 
-            <div className="timer-box">
+            <div className="timer-box" style={{ position: 'relative', zIndex: 2 }}>
               <div className="timer-digits">
                 {telemetry.rice
                   ? formatTime(telemetry.riceRem)
@@ -599,7 +606,7 @@ export default function App() {
               </div>
             </div>
 
-            <div className="ios-btn-row">
+            <div className="ios-btn-row" style={{ position: 'relative', zIndex: 2 }}>
               <button
                 onClick={(e) => { e.stopPropagation(); sendCommand('RICE_START'); setManualFocus('rice'); }}
                 className="ios-btn ios-btn-blue flex-1"
