@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Smart Home Automation</title>
+  <desc id="desc">A blue rounded-square app icon with a smart home and connected home-automation symbols.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#29D8F2"/>
+      <stop offset=".48" stop-color="#087CF4"/>
+      <stop offset="1" stop-color="#123BCB"/>
+    </linearGradient>
+    <linearGradient id="house" x1="0" y1="0" x2=".8" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#DDF5FF"/>
+    </linearGradient>
+    <linearGradient id="node" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity=".2"/>
+      <stop offset="1" stop-color="#CFF8FF" stop-opacity=".08"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#002B8C" flood-opacity=".28"/>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#003BA5" flood-opacity=".22"/>
+    </filter>
+  </defs>
+  <!-- iOS-style tile -->
+  <rect x="18" y="18" width="476" height="476" rx="108" fill="url(#bg)"/>
+  <path d="M38 126 Q38 38 126 38 H386 Q474 38 474 126 V155 Q256 65 38 155Z" fill="#FFFFFF" opacity=".07"/>
+  <rect x="18.75" y="18.75" width="474.5" height="474.5" rx="107" fill="none" stroke="#FFFFFF" stroke-opacity=".2" stroke-width="1.5"/>
+  <!-- Connected-device orbit -->
+  <circle cx="256" cy="256" r="151" fill="none" stroke="#75F0FF" stroke-width="7" stroke-linecap="round" stroke-dasharray="66 22" opacity=".9"/>
+  <!-- Center house -->
+  <g filter="url(#shadow)">
+    <path d="M166 246 L256 169 L346 246" fill="none" stroke="url(#house)" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M191 235 V327 Q191 342 206 342 H306 Q321 342 321 327 V235 L256 180Z" fill="url(#house)"/>
+    <path d="M211 265 Q256 222 301 265" fill="none" stroke="#08A9F4" stroke-width="13" stroke-linecap="round"/>
+    <path d="M226 284 Q256 255 286 284" fill="none" stroke="#087CF4" stroke-width="12" stroke-linecap="round"/>
+    <path d="M239 302 Q256 286 273 302" fill="none" stroke="#0757E8" stroke-width="11" stroke-linecap="round"/>
+    <circle cx="256" cy="318" r="7" fill="#0757E8"/>
+  </g>
+  <!-- Device nodes -->
+  <g filter="url(#soft)" stroke="#8CF4FF" stroke-width="3.5">
+    <circle cx="256" cy="91" r="38" fill="url(#node)"/>
+    <circle cx="112" cy="211" r="38" fill="url(#node)"/>
+    <circle cx="400" cy="211" r="38" fill="url(#node)"/>
+    <circle cx="157" cy="378" r="38" fill="url(#node)"/>
+    <circle cx="355" cy="378" r="38" fill="url(#node)"/>
+  </g>
+  <!-- Lightbulb -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M242 91 A14 14 0 1 1 270 91 Q267 100 262 105 V111 H250 V105 Q245 100 242 91Z" fill="#FFFFFF" stroke-width="2"/>
+    <path d="M250 116 H262 M252 121 H260"/>
+    <path d="M256 67 V61 M233 75 L229 71 M279 75 L283 71 M229 94 H223 M283 94 H289"/>
+  </g>
+  <!-- Plug -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M102 201 V190 M122 201 V190"/>
+    <path d="M97 201 H127 V214 A15 15 0 0 1 112 229 A15 15 0 0 1 97 214Z" fill="#FFFFFF" stroke-width="2"/>
+    <path d="M112 229 V237"/>
+  </g>
+  <!-- Thermometer -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M394 204 V190 A6 6 0 0 1 406 190 V204"/>
+    <path d="M394 204 V218 A11 11 0 1 0 406 218 V204"/>
+    <path d="M400 211 V222"/>
+  </g>
+  <!-- Security camera -->
+  <g fill="#FFFFFF" stroke="#FFFFFF" stroke-width="3" stroke-linejoin="round">
+    <path d="M139 370 L170 360 L178 379 L147 389Z"/>
+    <path d="M143 370 L135 373 L140 385 L148 382Z"/>
+    <path d="M154 389 V397 H169" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- Padlock -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="341" y="373" width="28" height="24" rx="5" fill="#FFFFFF" stroke-width="2"/>
+    <path d="M347 373 V366 A8 8 0 0 1 363 366 V373"/>
+    <circle cx="355" cy="384" r="2.5" fill="#087CF4" stroke="#087CF4"/>
+    <path d="M355 386 V390" stroke="#087CF4" stroke-width="2.5"/>
+  </g>
+</svg>

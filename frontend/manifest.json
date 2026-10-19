@@ -1,18 +1,17 @@
 {
-  "short_name": "SmartHome",
-  "name": "Smart Home Control Center",
-  "description": "Smart Home Automation Dashboard",
+  "short_name": "Smart Home",
+  "name": "Smart Home Ecosystem",
   "icons": [
     {
-      "src": "/favicon.svg",
-      "sizes": "192x192 512x512",
+      "src": "/icon.svg",
       "type": "image/svg+xml",
+      "sizes": "any",
       "purpose": "any maskable"
     }
   ],
   "start_url": "/",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#0d0f12",
+  "theme_color": "#0d0f12",
   "display": "standalone",
   "orientation": "portrait"
 }
