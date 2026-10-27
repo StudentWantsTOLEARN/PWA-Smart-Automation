@@ -5,6 +5,20 @@ import './App.css';
 const BACKEND_URL = "https://pwa-smart-automation.onrender.com";
 const socket = io(BACKEND_URL, { autoConnect: true });
 
+// Your VAPID Public Key for Web Push Subscriptions
+const PUBLIC_VAPID_KEY = 'BADGpn1laCjfy7PPMykF44e-mO_5vv3vT7WdarD1rkrLJIVU6jSawO142Nb02GoWwDbxdLmpMyv82KTE_ZLIRkA';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 export default function App() {
   const [telemetry, setTelemetry] = useState({
     lamp: false,
@@ -31,35 +45,48 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [manualFocus, setManualFocus] = useState(null);
 
-  // --- NEW: Notification Toggle State & Refs ---
-  const isFirstRender = useRef(true);
-  const prevRiceAlarm = useRef(false);
-  const prevKettle = useRef(false);
-  
-  // Initialize toggle based on whether permission was already granted previously
+  // --- Notification Toggle State & Subscription Handler ---
   const [notificationsEnabled, setNotificationsEnabled] = useState(
     "Notification" in window ? Notification.permission === "granted" : false
   );
 
-  // Handler for the Notification Toggle Switch
   const toggleNotifications = async () => {
     if (!notificationsEnabled) {
-      // User is turning it ON
-      if ("Notification" in window) {
+      if ("Notification" in window && "serviceWorker" in navigator) {
         let permission = Notification.permission;
         if (permission !== "granted") {
           permission = await Notification.requestPermission();
         }
+        
         if (permission === "granted") {
-          setNotificationsEnabled(true);
+          try {
+            const registration = await navigator.serviceWorker.ready;
+            
+            // Subscribe to background push service
+            const subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
+            });
+
+            // Send subscription token to Render backend
+            await fetch(`${BACKEND_URL}/api/subscribe`, {
+              method: 'POST',
+              body: JSON.stringify(subscription),
+              headers: { 'Content-Type': 'application/json' }
+            });
+
+            setNotificationsEnabled(true);
+          } catch (err) {
+            console.error("Failed to subscribe to push service:", err);
+            alert("Could not enable background push notifications.");
+          }
         } else {
-          alert("Permission denied. Please allow notifications in your browser/device settings.");
+          alert("Permission denied. Please allow notifications in your device settings.");
         }
       } else {
-        alert("Push notifications are not supported on this device/browser.");
+        alert("Push notifications are not supported on this browser.");
       }
     } else {
-      // User is turning it OFF
       setNotificationsEnabled(false);
     }
   };
@@ -71,46 +98,6 @@ export default function App() {
       socket.off('telemetry');
     };
   }, []);
-
-  // --- Timer Completion Notification Trigger Logic ---
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      prevRiceAlarm.current = telemetry.riceAlarm;
-      prevKettle.current = telemetry.kettle;
-      return;
-    }
-
-    const sendPushNotification = (title, body) => {
-      // Only send if the user's toggle is ON and browser permission is granted
-      if (notificationsEnabled && "Notification" in window && Notification.permission === "granted") {
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-          navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification(title, {
-              body: body,
-              icon: "/icon.svg",
-              vibrate: [200, 100, 200, 100, 200]
-            });
-          });
-        } else {
-          new Notification(title, { body, icon: "/icon.svg" });
-        }
-      }
-    };
-
-    // Trigger when Rice Cooker hits 100%
-    if (telemetry.riceAlarm && !prevRiceAlarm.current) {
-      sendPushNotification("🍚 Rice is Ready!", "The smart rice cooker has finished its cycle.");
-    }
-
-    // Trigger when Kettle timer finishes
-    if (!telemetry.kettle && prevKettle.current) {
-      sendPushNotification("🫖 Kettle Finished", "Your hot water is ready.");
-    }
-
-    prevRiceAlarm.current = telemetry.riceAlarm;
-    prevKettle.current = telemetry.kettle;
-  }, [telemetry, notificationsEnabled]);
 
   const sendCommand = async (cmd) => {
     try {
@@ -200,7 +187,7 @@ export default function App() {
                     </label>
                   </div>
                   
-                  {/* NEW: Notification Toggle Switch */}
+                  {/* Notification Toggle Switch */}
                   <div className="menu-item">
                     <span>🔔 Notifications</span>
                     <label className="ios-switch">
