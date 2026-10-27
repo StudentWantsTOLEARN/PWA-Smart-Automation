@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import io from 'socket.io-client';
 import './App.css';
 
@@ -29,14 +29,78 @@ export default function App() {
   // UI Theme & Focus Navigation States
   const [darkMode, setDarkMode] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [manualFocus, setManualFocus] = useState(null); // 'lamp' | 'fan' | 'kettle' | 'rice' | 'csi' | 'none' | null
+  const [manualFocus, setManualFocus] = useState(null);
 
+  // --- Native Push Notification States & Refs ---
+  const isFirstRender = useRef(true);
+  const prevRiceAlarm = useRef(false);
+  const prevKettle = useRef(false);
+  const [notifPermission, setNotifPermission] = useState(
+    "Notification" in window ? Notification.permission : "default"
+  );
+
+  const requestNotificationPermission = async () => {
+    if ("Notification" in window) {
+      const permission = await Notification.requestPermission();
+      setNotifPermission(permission);
+    }
+  };
+
+  // Auto-request permission on initial app load
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      requestNotificationPermission();
+    }
+  }, []);
+
+  // Socket Connection
   useEffect(() => {
     socket.on('telemetry', (data) => setTelemetry(data));
     return () => {
       socket.off('telemetry');
     };
   }, []);
+
+  // --- Timer Completion Notification Trigger Logic ---
+  useEffect(() => {
+    // Skip the first render so old alarms don't fire on a fresh app reload
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      prevRiceAlarm.current = telemetry.riceAlarm;
+      prevKettle.current = telemetry.kettle;
+      return;
+    }
+
+    const sendPushNotification = (title, body) => {
+      if ("Notification" in window && Notification.permission === "granted") {
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification(title, {
+              body: body,
+              icon: "/icon.svg",
+              vibrate: [200, 100, 200, 100, 200]
+            });
+          });
+        } else {
+          new Notification(title, { body, icon: "/icon.svg" });
+        }
+      }
+    };
+
+    // Trigger when Rice Cooker hits 100% (alarm switches to active)
+    if (telemetry.riceAlarm && !prevRiceAlarm.current) {
+      sendPushNotification("🍚 Rice is Ready!", "The smart rice cooker has finished its cycle.");
+    }
+
+    // Trigger when Kettle timer finishes (switches from heating to standby)
+    if (!telemetry.kettle && prevKettle.current) {
+      sendPushNotification("🫖 Kettle Finished", "Your hot water is ready.");
+    }
+
+    // Sync previous states for the next render
+    prevRiceAlarm.current = telemetry.riceAlarm;
+    prevKettle.current = telemetry.kettle;
+  }, [telemetry]);
 
   const sendCommand = async (cmd) => {
     try {
@@ -103,7 +167,6 @@ export default function App() {
           </div>
 
           <div className="header-right-tools">
-            {/* Top Right 3-Lanes Menu */}
             <div className="ios-menu-wrapper">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
@@ -126,6 +189,16 @@ export default function App() {
                       <span className="ios-slider"></span>
                     </label>
                   </div>
+                  {/* Manual Notification Enable Button */}
+                  {notifPermission !== 'granted' && (
+                    <div 
+                      className="menu-item" 
+                      onClick={requestNotificationPermission}
+                      style={{ cursor: 'pointer', color: '#007AFF', fontWeight: '600' }}
+                    >
+                      <span>🔔 Enable Notifications</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -376,7 +449,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* 2. CLIP FAN CARD (Strict Containment Applied) */}
+          {/* 2. CLIP FAN CARD */}
           <div
             onClick={() => toggleFocus('fan')}
             className={`ios-card fan-card ${
