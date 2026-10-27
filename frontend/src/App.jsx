@@ -31,27 +31,38 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [manualFocus, setManualFocus] = useState(null);
 
-  // --- Native Push Notification States & Refs ---
+  // --- NEW: Notification Toggle State & Refs ---
   const isFirstRender = useRef(true);
   const prevRiceAlarm = useRef(false);
   const prevKettle = useRef(false);
-  const [notifPermission, setNotifPermission] = useState(
-    "Notification" in window ? Notification.permission : "default"
+  
+  // Initialize toggle based on whether permission was already granted previously
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    "Notification" in window ? Notification.permission === "granted" : false
   );
 
-  const requestNotificationPermission = async () => {
-    if ("Notification" in window) {
-      const permission = await Notification.requestPermission();
-      setNotifPermission(permission);
+  // Handler for the Notification Toggle Switch
+  const toggleNotifications = async () => {
+    if (!notificationsEnabled) {
+      // User is turning it ON
+      if ("Notification" in window) {
+        let permission = Notification.permission;
+        if (permission !== "granted") {
+          permission = await Notification.requestPermission();
+        }
+        if (permission === "granted") {
+          setNotificationsEnabled(true);
+        } else {
+          alert("Permission denied. Please allow notifications in your browser/device settings.");
+        }
+      } else {
+        alert("Push notifications are not supported on this device/browser.");
+      }
+    } else {
+      // User is turning it OFF
+      setNotificationsEnabled(false);
     }
   };
-
-  // Auto-request permission on initial app load
-  useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      requestNotificationPermission();
-    }
-  }, []);
 
   // Socket Connection
   useEffect(() => {
@@ -63,7 +74,6 @@ export default function App() {
 
   // --- Timer Completion Notification Trigger Logic ---
   useEffect(() => {
-    // Skip the first render so old alarms don't fire on a fresh app reload
     if (isFirstRender.current) {
       isFirstRender.current = false;
       prevRiceAlarm.current = telemetry.riceAlarm;
@@ -72,7 +82,8 @@ export default function App() {
     }
 
     const sendPushNotification = (title, body) => {
-      if ("Notification" in window && Notification.permission === "granted") {
+      // Only send if the user's toggle is ON and browser permission is granted
+      if (notificationsEnabled && "Notification" in window && Notification.permission === "granted") {
         if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
           navigator.serviceWorker.ready.then(registration => {
             registration.showNotification(title, {
@@ -87,20 +98,19 @@ export default function App() {
       }
     };
 
-    // Trigger when Rice Cooker hits 100% (alarm switches to active)
+    // Trigger when Rice Cooker hits 100%
     if (telemetry.riceAlarm && !prevRiceAlarm.current) {
       sendPushNotification("🍚 Rice is Ready!", "The smart rice cooker has finished its cycle.");
     }
 
-    // Trigger when Kettle timer finishes (switches from heating to standby)
+    // Trigger when Kettle timer finishes
     if (!telemetry.kettle && prevKettle.current) {
       sendPushNotification("🫖 Kettle Finished", "Your hot water is ready.");
     }
 
-    // Sync previous states for the next render
     prevRiceAlarm.current = telemetry.riceAlarm;
     prevKettle.current = telemetry.kettle;
-  }, [telemetry]);
+  }, [telemetry, notificationsEnabled]);
 
   const sendCommand = async (cmd) => {
     try {
@@ -189,16 +199,19 @@ export default function App() {
                       <span className="ios-slider"></span>
                     </label>
                   </div>
-                  {/* Manual Notification Enable Button */}
-                  {notifPermission !== 'granted' && (
-                    <div 
-                      className="menu-item" 
-                      onClick={requestNotificationPermission}
-                      style={{ cursor: 'pointer', color: '#007AFF', fontWeight: '600' }}
-                    >
-                      <span>🔔 Enable Notifications</span>
-                    </div>
-                  )}
+                  
+                  {/* NEW: Notification Toggle Switch */}
+                  <div className="menu-item">
+                    <span>🔔 Notifications</span>
+                    <label className="ios-switch">
+                      <input
+                        type="checkbox"
+                        checked={notificationsEnabled}
+                        onChange={toggleNotifications}
+                      />
+                      <span className="ios-slider"></span>
+                    </label>
+                  </div>
                 </div>
               )}
             </div>
@@ -694,7 +707,6 @@ export default function App() {
               </button>
             </div>
           </div>
-
         </div>
       </div>
     </div>
